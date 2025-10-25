@@ -10,7 +10,7 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.isLoggedIn = false;
         this.gameHistory = [];
-        this.backendUrl = 'https://your-render-app.onrender.com'; // Update this with your actual Render URL
+        this.backendUrl = 'https://stone-paper-scissors-48b2.onrender.com';
         
         this.initializeElements();
         this.attachEventListeners();
