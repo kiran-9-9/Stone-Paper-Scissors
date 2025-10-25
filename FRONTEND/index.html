@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors - Enhanced</title>
+    <link rel="stylesheet" href="sps.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1 class="title">
+                <i class="fas fa-hand-rock"></i>
+                Rock Paper Scissors
+                <i class="fas fa-hand-scissors"></i>
+            </h1>
+            <div class="user-info">
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="username">Player</span>
+                </div>
+                <button id="loginBtn" class="btn btn-secondary">Login</button>
+            </div>
+        </header>
+
+        <!-- Game Stats -->
+        <div class="game-stats">
+            <div class="stat-card">
+                <i class="fas fa-trophy"></i>
+                <span class="stat-number" id="totalWins">0</span>
+                <span class="stat-label">Wins</span>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-chart-line"></i>
+                <span class="stat-number" id="winRate">0%</span>
+                <span class="stat-label">Win Rate</span>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-fire"></i>
+                <span class="stat-number" id="streak">0</span>
+                <span class="stat-label">Streak</span>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area">
+            <!-- Player Choices -->
+            <div class="choices-section">
+                <h2>Choose your weapon</h2>
+                <div class="choices">
+                    <div class="choice" id="rock" data-choice="rock">
+                        <div class="choice-inner">
+                            <i class="fas fa-hand-rock"></i>
+                            <span>Rock</span>
+                        </div>
+                    </div>
+                    <div class="choice" id="paper" data-choice="paper">
+                        <div class="choice-inner">
+                            <i class="fas fa-hand-paper"></i>
+                            <span>Paper</span>
+                        </div>
+                    </div>
+                    <div class="choice" id="scissors" data-choice="scissors">
+                        <div class="choice-inner">
+                            <i class="fas fa-hand-scissors"></i>
+                            <span>Scissors</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Battle Area -->
+            <div class="battle-area">
+                <div class="player-area">
+                    <div class="player-choice" id="playerChoice">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <h3>You</h3>
+                </div>
+                <div class="vs-area">
+                    <div class="vs-text">VS</div>
+                </div>
+                <div class="computer-area">
+                    <div class="computer-choice" id="computerChoice">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <h3>Computer</h3>
+                </div>
+            </div>
+
+            <!-- Scoreboard -->
+            <div class="scoreboard">
+                <div class="score-card player-score">
+                    <div class="score-number" id="userScore">0</div>
+                    <div class="score-label">You</div>
+                </div>
+                <div class="score-card computer-score">
+                    <div class="score-number" id="compScore">0</div>
+                    <div class="score-label">Computer</div>
+                </div>
+            </div>
+
+            <!-- Game Message -->
+            <div class="msg-container">
+                <p class="msg" id="gameMessage">Make your move!</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button id="reset" class="btn btn-danger">
+                    <i class="fas fa-redo"></i>
+                    Reset Game
+                </button>
+                <button id="saveScore" class="btn btn-success">
+                    <i class="fas fa-save"></i>
+                    Save Score
+                </button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Modal -->
+        <div id="leaderboardModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-trophy"></i> Leaderboard</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="leaderboardList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="playerName">Player Name:</label>
+                            <input type="text" id="playerName" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="sps.js"></script>
+</body>
+</html>
