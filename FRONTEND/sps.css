@@ -586,6 +586,17 @@ body {
     100% { transform: scale(1); }
 }
 
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

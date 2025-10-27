@@ -10,7 +10,7 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.isLoggedIn = false;
         this.gameHistory = [];
-        this.backendUrl = 'http://localhost:3000';
+        this.backendUrl = 'https://your-backend-url.onrender.com'; // Update with your Render backend URL
         
         this.initializeElements();
         this.attachEventListeners();
@@ -248,14 +248,24 @@ class RockPaperScissorsGame {
         this.playerChoiceEl.innerHTML = '<i class="fas fa-question"></i>';
         this.computerChoiceEl.innerHTML = '<i class="fas fa-question"></i>';
         
-        // Reset stats
-        this.updateStats();
+        // Remove any animation classes
+        this.playerChoiceEl.classList.remove('win-animation');
+        this.computerChoiceEl.classList.remove('win-animation');
+        
+        // Reset game state
+        this.isGameInProgress = false;
+        
+        // Save the reset state
+        this.saveGameData();
+        
+        this.showNotification('Game reset!', 'info');
     }
 
     async saveScore() {
         console.log('Save score called. isLoggedIn:', this.isLoggedIn, 'playerName:', this.playerName);
         if (!this.isLoggedIn) {
             this.showLoginModal();
+            this.showNotification('Please login to save your score!', 'info');
             return;
         }
         
@@ -279,11 +289,14 @@ class RockPaperScissorsGame {
                 body: JSON.stringify(scoreData)
             });
             
-            if (response.ok) {
-                this.showNotification('Score saved successfully!', 'success');
-            } else {
-                throw new Error('Failed to save score');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save score');
             }
+            
+            const data = await response.json();
+            this.showNotification('Score saved successfully!', 'success');
+            
         } catch (error) {
             console.error('Error saving score:', error);
             this.showNotification('Failed to save score. Please try again.', 'error');
@@ -300,15 +313,22 @@ class RockPaperScissorsGame {
 
     login() {
         const playerName = document.getElementById('playerName').value.trim();
-        if (playerName) {
-            this.playerName = playerName;
-            this.usernameEl.textContent = playerName;
-            this.isLoggedIn = true;
-            this.loginBtn.textContent = 'Logout';
-            this.closeModal(this.loginModal);
-            this.showNotification(`Welcome, ${playerName}!`, 'success');
-            this.saveGameData(); // Save login state
+        if (!playerName || playerName.length === 0) {
+            this.showNotification('Please enter a valid player name!', 'error');
+            return;
         }
+        
+        this.playerName = playerName;
+        this.usernameEl.textContent = playerName;
+        this.isLoggedIn = true;
+        this.loginBtn.textContent = 'Logout';
+        
+        // Clear the input
+        document.getElementById('playerName').value = '';
+        
+        this.closeModal(this.loginModal);
+        this.showNotification(`Welcome, ${playerName}!`, 'success');
+        this.saveGameData(); // Save login state
     }
 
     logout() {
@@ -318,11 +338,22 @@ class RockPaperScissorsGame {
         this.loginBtn.textContent = 'Login';
         this.showNotification('Logged out successfully!', 'info');
         this.saveGameData(); // Save logout state
+        
+        // Clear any session-specific data but keep game scores
+        console.log('User logged out');
     }
 
     async loadLeaderboard() {
+        const leaderboardList = document.getElementById('leaderboardList');
+        leaderboardList.innerHTML = '<p style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 20px;">Loading leaderboard...</p>';
+        
         try {
             const response = await fetch(`${this.backendUrl}/api/leaderboard`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (!data.success) {
@@ -330,11 +361,10 @@ class RockPaperScissorsGame {
             }
             
             const leaderboard = data.leaderboard || [];
-            const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
             
             if (leaderboard.length === 0) {
-                leaderboardList.innerHTML = '<p style="text-align: center; color: #666;">No players found. Be the first to play!</p>';
+                leaderboardList.innerHTML = '<p style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 20px;">No players found. Be the first to play and save your score!</p>';
                 return;
             }
             
@@ -355,7 +385,7 @@ class RockPaperScissorsGame {
                 item.className = 'leaderboard-item';
                 item.innerHTML = `
                     <span class="rank">#${index + 1}</span>
-                    <span class="name">${player.playerName}</span>
+                    <span class="name">${player.playerName || 'Unknown'}</span>
                     <span class="score">${player.bestScore || 0}</span>
                     <span class="wins">${player.totalWins || 0}W</span>
                     <span class="games">${player.totalGames || 0}G</span>
@@ -364,7 +394,7 @@ class RockPaperScissorsGame {
             });
         } catch (error) {
             console.error('Error loading leaderboard:', error);
-            document.getElementById('leaderboardList').innerHTML = '<p style="text-align: center; color: #ff6b6b;">Failed to load leaderboard. Please try again.</p>';
+            leaderboardList.innerHTML = '<p style="text-align: center; color: #ff6b6b; padding: 20px;">Failed to load leaderboard. The backend server might be down.</p>';
         }
     }
 
@@ -376,26 +406,32 @@ class RockPaperScissorsGame {
     loadGameData() {
         const savedData = localStorage.getItem('rpsGameData');
         if (savedData) {
-            const data = JSON.parse(savedData);
-            this.userScore = data.userScore || 0;
-            this.compScore = data.compScore || 0;
-            this.totalGames = data.totalGames || 0;
-            this.totalWins = data.totalWins || 0;
-            this.currentStreak = data.currentStreak || 0;
-            this.maxStreak = data.maxStreak || 0;
-            this.gameHistory = data.gameHistory || [];
-            this.playerName = data.playerName || 'Player';
-            this.isLoggedIn = data.isLoggedIn || false;
-            
-            this.userScoreEl.textContent = this.userScore;
-            this.compScoreEl.textContent = this.compScore;
-            this.usernameEl.textContent = this.playerName;
-            
-            // Update login button state
-            if (this.isLoggedIn) {
-                this.loginBtn.textContent = 'Logout';
-            } else {
-                this.loginBtn.textContent = 'Login';
+            try {
+                const data = JSON.parse(savedData);
+                this.userScore = data.userScore || 0;
+                this.compScore = data.compScore || 0;
+                this.totalGames = data.totalGames || 0;
+                this.totalWins = data.totalWins || 0;
+                this.currentStreak = data.currentStreak || 0;
+                this.maxStreak = data.maxStreak || 0;
+                this.gameHistory = data.gameHistory || [];
+                this.playerName = data.playerName || 'Player';
+                this.isLoggedIn = data.isLoggedIn || false;
+                
+                this.userScoreEl.textContent = this.userScore;
+                this.compScoreEl.textContent = this.compScore;
+                this.usernameEl.textContent = this.playerName;
+                
+                // Update login button state
+                if (this.isLoggedIn) {
+                    this.loginBtn.textContent = 'Logout';
+                } else {
+                    this.loginBtn.textContent = 'Login';
+                }
+            } catch (error) {
+                console.error('Error parsing saved game data:', error);
+                // Reset to defaults
+                localStorage.removeItem('rpsGameData');
             }
         }
     }
@@ -417,28 +453,44 @@ class RockPaperScissorsGame {
     }
 
     showNotification(message, type = 'info') {
+        // Remove any existing notifications first
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(n => n.remove());
+        
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
+        
+        // Set colors based on type
+        let bgColor = '#667eea'; // default info color
+        if (type === 'success') bgColor = '#4ecdc4';
+        else if (type === 'error') bgColor = '#ff6b6b';
+        else if (type === 'info') bgColor = '#667eea';
+        
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            background: ${type === 'success' ? '#4ecdc4' : type === 'error' ? '#ff6b6b' : '#667eea'};
+            background: ${bgColor};
             color: white;
             padding: 15px 20px;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             z-index: 1001;
             animation: slideIn 0.3s ease;
+            font-weight: 500;
+            max-width: 300px;
         `;
         
         document.body.appendChild(notification);
         
         // Remove notification after 3 seconds
         setTimeout(() => {
-            notification.remove();
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }, 3000);
     }
 

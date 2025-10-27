@@ -17,7 +17,9 @@ app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
     origin: process.env.FRONTEND_URL || '*',
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -35,12 +37,29 @@ app.use('/api/', limiter);
 // MongoDB connection
 const connectDB = async () => {
     try {
-        const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rps-game';
-        await mongoose.connect(mongoURI);
-        console.log('MongoDB connected successfully');
+        const mongoURI = process.env.MONGODB_URI;
+        
+        if (!mongoURI) {
+            throw new Error('MongoDB connection string not provided. Please set MONGODB_URI in your environment variables.');
+        }
+        
+        const connectOptions = {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        };
+        
+        await mongoose.connect(mongoURI, connectOptions);
+        console.log('✅ MongoDB connected successfully');
     } catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
+        console.error('❌ MongoDB connection error:', error.message);
+        console.error('Please check your MONGODB_URI environment variable.');
+        // Don't exit in production - let the app start even if DB is temporarily unavailable
+        if (process.env.NODE_ENV === 'production') {
+            console.log('⚠️ Continuing without database connection...');
+        } else {
+            process.exit(1);
+        }
     }
 };
 

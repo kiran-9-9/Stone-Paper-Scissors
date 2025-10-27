@@ -1,6 +1,6 @@
 # 🪨📄✂️ Enhanced Rock Paper Scissors Game
 
-A modern, responsive Rock Paper Scissors game with backend integration, user tracking, leaderboards, and smooth animations. Built with vanilla JavaScript, Node.js, and deployed on Netlify and Render.
+A modern, responsive Rock Paper Scissors game with backend integration, user tracking, leaderboards, and smooth animations. Built with vanilla JavaScript, Node.js, Express, and MongoDB. Deployed on Netlify (frontend) and Render (backend).
 
 ## ✨ Features
 
@@ -32,6 +32,8 @@ A modern, responsive Rock Paper Scissors game with backend integration, user tra
 
 ### Local Development
 
+**Note:** This project is configured for production deployment. For local development, you'll need to set up environment variables.
+
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
@@ -52,7 +54,7 @@ A modern, responsive Rock Paper Scissors game with backend integration, user tra
    npm install
    cp env.example .env
    # Edit .env with your MongoDB URI
-   npm run dev
+   npm start
    ```
 
 ## 🌐 Deployment Guide
