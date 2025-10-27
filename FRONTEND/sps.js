@@ -413,10 +413,14 @@ class RockPaperScissorsGame {
     }
 
     loadGameData() {
-        const savedData = localStorage.getItem('rpsGameData');
-        if (savedData) {
-            try {
+        try {
+            const savedData = localStorage.getItem('rpsGameData');
+            console.log('Loading game data. Saved data exists:', !!savedData);
+            
+            if (savedData) {
                 const data = JSON.parse(savedData);
+                console.log('Loaded data:', data);
+                
                 this.userScore = data.userScore || 0;
                 this.compScore = data.compScore || 0;
                 this.totalGames = data.totalGames || 0;
@@ -427,6 +431,8 @@ class RockPaperScissorsGame {
                 this.playerName = data.playerName || 'Player';
                 this.isLoggedIn = data.isLoggedIn || false;
                 
+                console.log('Login state loaded:', this.isLoggedIn, 'Player:', this.playerName);
+                
                 this.userScoreEl.textContent = this.userScore;
                 this.compScoreEl.textContent = this.compScore;
                 this.usernameEl.textContent = this.playerName;
@@ -434,14 +440,18 @@ class RockPaperScissorsGame {
                 // Update login button state
                 if (this.isLoggedIn) {
                     this.loginBtn.textContent = 'Logout';
+                    console.log('Button updated to: Logout');
                 } else {
                     this.loginBtn.textContent = 'Login';
+                    console.log('Button updated to: Login');
                 }
-            } catch (error) {
-                console.error('Error parsing saved game data:', error);
-                // Reset to defaults
-                localStorage.removeItem('rpsGameData');
+            } else {
+                console.log('No saved data found, using defaults');
             }
+        } catch (error) {
+            console.error('Error loading game data:', error);
+            // Reset to defaults
+            localStorage.removeItem('rpsGameData');
         }
     }
 
@@ -458,7 +468,14 @@ class RockPaperScissorsGame {
             isLoggedIn: this.isLoggedIn
         };
         
-        localStorage.setItem('rpsGameData', JSON.stringify(gameData));
+        console.log('Saving game data. Login state:', this.isLoggedIn, 'Player:', this.playerName);
+        
+        try {
+            localStorage.setItem('rpsGameData', JSON.stringify(gameData));
+            console.log('Game data saved successfully');
+        } catch (error) {
+            console.error('Error saving game data:', error);
+        }
     }
 
     showNotification(message, type = 'info') {
