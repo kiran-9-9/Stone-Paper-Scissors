@@ -71,10 +71,18 @@ class RockPaperScissorsGame {
         // Login/Logout
         this.loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Check the button text to determine action (more reliable than checking isLoggedIn)
-            if (this.loginBtn.textContent.trim() === 'Logout') {
+            e.stopPropagation();
+            
+            console.log('Login/Logout button clicked');
+            console.log('Button text:', this.loginBtn.textContent.trim());
+            console.log('isLoggedIn state:', this.isLoggedIn);
+            
+            // Use the actual isLoggedIn state instead of button text
+            if (this.isLoggedIn) {
+                console.log('Calling logout()');
                 this.logout();
             } else {
+                console.log('Calling showLoginModal()');
                 this.showLoginModal();
             }
         });
@@ -340,12 +348,17 @@ class RockPaperScissorsGame {
     logout() {
         console.log('Logout called. Current state - isLoggedIn:', this.isLoggedIn);
         
+        // Immediately set the state to prevent any further actions
         this.isLoggedIn = false;
         this.playerName = 'Player';
         this.usernameEl.textContent = 'Player';
-        this.loginBtn.textContent = 'Login';
         
-        // Don't show notification if already logged out
+        // Use setTimeout to update button AFTER state is changed to prevent event bubbling
+        setTimeout(() => {
+            this.loginBtn.textContent = 'Login';
+            console.log('Button text updated to: Login');
+        }, 0);
+        
         this.showNotification('Logged out successfully!', 'info');
         this.saveGameData(); // Save logout state
         
