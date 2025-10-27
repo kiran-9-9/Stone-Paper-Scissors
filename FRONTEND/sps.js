@@ -69,8 +69,10 @@ class RockPaperScissorsGame {
         });
 
         // Login/Logout
-        this.loginBtn.addEventListener('click', () => {
-            if (this.isLoggedIn) {
+        this.loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Check the button text to determine action (more reliable than checking isLoggedIn)
+            if (this.loginBtn.textContent.trim() === 'Logout') {
                 this.logout();
             } else {
                 this.showLoginModal();
@@ -318,6 +320,8 @@ class RockPaperScissorsGame {
             return;
         }
         
+        console.log('Login called for player:', playerName);
+        
         this.playerName = playerName;
         this.usernameEl.textContent = playerName;
         this.isLoggedIn = true;
@@ -329,18 +333,23 @@ class RockPaperScissorsGame {
         this.closeModal(this.loginModal);
         this.showNotification(`Welcome, ${playerName}!`, 'success');
         this.saveGameData(); // Save login state
+        
+        console.log('User logged in. New state - isLoggedIn:', this.isLoggedIn);
     }
 
     logout() {
+        console.log('Logout called. Current state - isLoggedIn:', this.isLoggedIn);
+        
         this.isLoggedIn = false;
         this.playerName = 'Player';
         this.usernameEl.textContent = 'Player';
         this.loginBtn.textContent = 'Login';
+        
+        // Don't show notification if already logged out
         this.showNotification('Logged out successfully!', 'info');
         this.saveGameData(); // Save logout state
         
-        // Clear any session-specific data but keep game scores
-        console.log('User logged out');
+        console.log('User logged out. New state - isLoggedIn:', this.isLoggedIn);
     }
 
     async loadLeaderboard() {
