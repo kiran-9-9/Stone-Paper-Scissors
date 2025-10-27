@@ -442,7 +442,10 @@ class RockPaperScissorsGame {
                 this.maxStreak = data.maxStreak || 0;
                 this.gameHistory = data.gameHistory || [];
                 this.playerName = data.playerName || 'Player';
-                this.isLoggedIn = data.isLoggedIn || false;
+                
+                // If isLoggedIn is saved, use it; otherwise infer from username
+                // If username is not 'Player', user was logged in
+                this.isLoggedIn = data.isLoggedIn !== undefined ? data.isLoggedIn : (this.playerName !== 'Player' && this.playerName !== '');
                 
                 console.log('Login state loaded:', this.isLoggedIn, 'Player:', this.playerName);
                 
@@ -451,12 +454,16 @@ class RockPaperScissorsGame {
                 this.usernameEl.textContent = this.playerName;
                 
                 // Update login button state
-                if (this.isLoggedIn) {
-                    this.loginBtn.textContent = 'Logout';
-                    console.log('Button updated to: Logout');
+                if (this.loginBtn) {
+                    if (this.isLoggedIn) {
+                        this.loginBtn.textContent = 'Logout';
+                        console.log('Button updated to: Logout');
+                    } else {
+                        this.loginBtn.textContent = 'Login';
+                        console.log('Button updated to: Login');
+                    }
                 } else {
-                    this.loginBtn.textContent = 'Login';
-                    console.log('Button updated to: Login');
+                    console.warn('Login button not found!');
                 }
             } else {
                 console.log('No saved data found, using defaults');
