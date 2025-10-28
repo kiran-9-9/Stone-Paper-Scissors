@@ -17,10 +17,21 @@ class RockPaperScissorsGame {
         this.attachEventListeners();
         this.loadGameData();
         this.updateStats();
+        this.updateAuthUI();
         
         // Debug: Log initial state
         console.log('Game initialized. isLoggedIn:', this.isLoggedIn, 'playerName:', this.playerName);
     }
+    updateAuthUI() {
+        if (!this.loginBtn) return;
+        if (this.isLoggedIn) {
+            this.loginBtn.textContent = 'Logout';
+        } else {
+            this.loginBtn.textContent = 'Login';
+        }
+        if (this.usernameEl) this.usernameEl.textContent = this.playerName || 'Player';
+    }
+
 
     initializeElements() {
         // Game elements
@@ -356,7 +367,7 @@ class RockPaperScissorsGame {
             this.playerName = data.player?.playerName || playerName;
             this.usernameEl.textContent = this.playerName;
             this.isLoggedIn = true;
-            this.loginBtn.textContent = 'Logout';
+            this.updateAuthUI();
 
             // Clear inputs
             if (this.loginEmailInput) this.loginEmailInput.value = '';
@@ -396,7 +407,7 @@ class RockPaperScissorsGame {
             this.playerName = data.player?.playerName || playerName;
             this.usernameEl.textContent = this.playerName;
             this.isLoggedIn = true;
-            this.loginBtn.textContent = 'Logout';
+            this.updateAuthUI();
 
             // Clear inputs
             if (this.loginEmailInput) this.loginEmailInput.value = '';
@@ -420,7 +431,7 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.usernameEl.textContent = 'Player';
         this.jwtToken = null;
-        this.loginBtn.textContent = 'Login';
+        this.updateAuthUI();
         console.log('Button text updated to: Login');
         
         // Ensure any open modals are closed
@@ -515,7 +526,9 @@ class RockPaperScissorsGame {
                 
                 // If isLoggedIn is saved, use it; otherwise infer from username
                 // If username is not 'Player', user was logged in
-                this.isLoggedIn = data.isLoggedIn !== undefined ? data.isLoggedIn : (this.playerName !== 'Player' && this.playerName !== '');
+                this.isLoggedIn =
+                    data.isLoggedIn !== undefined ? data.isLoggedIn :
+                    (this.jwtToken ? true : (this.playerName !== 'Player' && this.playerName !== ''));
                 
                 console.log('Login state loaded:', this.isLoggedIn, 'Player:', this.playerName);
                 
@@ -525,13 +538,7 @@ class RockPaperScissorsGame {
                 
                 // Update login button state
                 if (this.loginBtn) {
-                    if (this.isLoggedIn) {
-                        this.loginBtn.textContent = 'Logout';
-                        console.log('Button updated to: Logout');
-                    } else {
-                        this.loginBtn.textContent = 'Login';
-                        console.log('Button updated to: Login');
-                    }
+                    this.updateAuthUI();
                 } else {
                     console.warn('Login button not found!');
                 }
