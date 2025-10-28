@@ -11,6 +11,7 @@ class RockPaperScissorsGame {
         this.isLoggedIn = false;
         this.gameHistory = [];
         this.backendUrl = 'https://stone-paper-scissors-backend-unth.onrender.com'; // Update with your Render backend URL
+        this.jwtToken = null;
         
         this.initializeElements();
         this.attachEventListeners();
@@ -47,6 +48,7 @@ class RockPaperScissorsGame {
         this.loginModal = document.getElementById('loginModal');
         this.leaderboardModal = document.getElementById('leaderboardModal');
         this.loginForm = document.getElementById('loginForm');
+        this.loginEmailInput = document.getElementById('loginEmail');
     }
 
     attachEventListeners() {
@@ -281,7 +283,6 @@ class RockPaperScissorsGame {
         
         try {
             const scoreData = {
-                playerName: this.playerName,
                 score: this.userScore,
                 totalGames: this.totalGames,
                 totalWins: this.totalWins,
@@ -295,6 +296,7 @@ class RockPaperScissorsGame {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(this.jwtToken ? { 'Authorization': `Bearer ${this.jwtToken}` } : {})
                 },
                 body: JSON.stringify(scoreData)
             });
@@ -321,28 +323,42 @@ class RockPaperScissorsGame {
         modal.style.display = 'none';
     }
 
-    login() {
+    async login() {
+        const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : '';
         const playerName = document.getElementById('playerName').value.trim();
-        if (!playerName || playerName.length === 0) {
-            this.showNotification('Please enter a valid player name!', 'error');
+        if (!email || !playerName) {
+            this.showNotification('Email and player name are required', 'error');
             return;
         }
-        
-        console.log('Login called for player:', playerName);
-        
-        this.playerName = playerName;
-        this.usernameEl.textContent = playerName;
-        this.isLoggedIn = true;
-        this.loginBtn.textContent = 'Logout';
-        
-        // Clear the input
-        document.getElementById('playerName').value = '';
-        
-        this.closeModal(this.loginModal);
-        this.showNotification(`Welcome, ${playerName}!`, 'success');
-        this.saveGameData(); // Save login state
-        
-        console.log('User logged in. New state - isLoggedIn:', this.isLoggedIn);
+
+        try {
+            const resp = await fetch(`${this.backendUrl}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, playerName })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.message || 'Login failed');
+            }
+            const data = await resp.json();
+            this.jwtToken = data.token;
+            this.playerName = data.player?.playerName || playerName;
+            this.usernameEl.textContent = this.playerName;
+            this.isLoggedIn = true;
+            this.loginBtn.textContent = 'Logout';
+
+            // Clear inputs
+            if (this.loginEmailInput) this.loginEmailInput.value = '';
+            document.getElementById('playerName').value = '';
+
+            this.closeModal(this.loginModal);
+            this.showNotification(`Welcome, ${this.playerName}!`, 'success');
+            this.saveGameData();
+        } catch (e) {
+            console.error('Login error:', e);
+            this.showNotification(e.message, 'error');
+        }
     }
 
     logout() {
@@ -352,6 +368,7 @@ class RockPaperScissorsGame {
         this.isLoggedIn = false;
         this.playerName = 'Player';
         this.usernameEl.textContent = 'Player';
+        this.jwtToken = null;
         
         // Use setTimeout to update button AFTER state is changed to prevent event bubbling
         setTimeout(() => {
@@ -442,6 +459,7 @@ class RockPaperScissorsGame {
                 this.maxStreak = data.maxStreak || 0;
                 this.gameHistory = data.gameHistory || [];
                 this.playerName = data.playerName || 'Player';
+                this.jwtToken = data.jwtToken || null;
                 
                 // If isLoggedIn is saved, use it; otherwise infer from username
                 // If username is not 'Player', user was logged in
@@ -485,7 +503,8 @@ class RockPaperScissorsGame {
             maxStreak: this.maxStreak,
             gameHistory: this.gameHistory,
             playerName: this.playerName,
-            isLoggedIn: this.isLoggedIn
+            isLoggedIn: this.isLoggedIn,
+            jwtToken: this.jwtToken
         };
         
         console.log('Saving game data. Login state:', this.isLoggedIn, 'Player:', this.playerName);

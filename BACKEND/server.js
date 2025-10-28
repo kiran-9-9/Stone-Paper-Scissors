@@ -6,6 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -103,6 +104,10 @@ const GameSessionSchema = new mongoose.Schema({
     duration: Number // in minutes
 });
 
+// Indexes
+PlayerSchema.index({ email: 1 }, { unique: true, sparse: true });
+PlayerSchema.index({ playerName: 1 });
+
 const Player = mongoose.model('Player', PlayerSchema);
 const GameSession = mongoose.model('GameSession', GameSessionSchema);
 
@@ -116,6 +121,22 @@ const validateScoreData = [
     body('currentStreak').isNumeric().withMessage('Current streak must be a number'),
     body('maxStreak').isNumeric().withMessage('Max streak must be a number')
 ];
+
+// Auth helpers
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-env';
+
+const authMiddleware = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ success: false, message: 'Missing Authorization token' });
+        const payload = jwt.verify(token, JWT_SECRET);
+        req.user = payload; // { playerId, email, playerName }
+        next();
+    } catch (err) {
+        return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -136,29 +157,74 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Auth: login or register
+app.post('/api/auth/login', [
+    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('playerName').trim().isLength({ min: 2, max: 50 }).withMessage('Player name must be 2-50 chars')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { email, playerName } = req.body;
+
+        let player = await Player.findOne({ email });
+        if (!player) {
+            player = new Player({ email, playerName });
+            await player.save();
+        } else if (player.playerName !== playerName) {
+            player.playerName = playerName;
+            player.updatedAt = new Date();
+            await player.save();
+        }
+
+        const token = jwt.sign({ playerId: player._id.toString(), email: player.email, playerName: player.playerName }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.json({
+            success: true,
+            token,
+            player: {
+                id: player._id,
+                email: player.email,
+                playerName: player.playerName,
+                bestScore: player.bestScore,
+                totalWins: player.totalWins,
+                totalGames: player.totalGames
+            }
+        });
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
 // Save score endpoint
-app.post('/api/scores', validateScoreData, async (req, res) => {
+app.post('/api/scores', authMiddleware, validateScoreData, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { playerName, score, totalGames, totalWins, winRate, currentStreak, maxStreak, gameHistory } = req.body;
+        const { score, totalGames, totalWins, winRate, currentStreak, maxStreak, gameHistory } = req.body;
+
+        // Identify player from JWT
+        const { playerId, email } = req.user || {};
 
         // Find or create player
-        let player = await Player.findOne({ playerName });
+        let player = null;
+        if (playerId) {
+            player = await Player.findById(playerId);
+        }
+        if (!player && email) {
+            player = await Player.findOne({ email });
+        }
         if (!player) {
-            player = new Player({
-                playerName,
-                totalGames,
-                totalWins,
-                currentStreak,
-                maxStreak,
-                bestScore: score,
-                gameHistory: gameHistory || []
-            });
-        } else {
+            return res.status(401).json({ success: false, message: 'Player not found for token' });
+        }
+        {
             // Update player stats
             player.totalGames += totalGames;
             player.totalWins += totalWins;
