@@ -10,7 +10,7 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.isLoggedIn = false;
         this.gameHistory = [];
-        this.backendUrl = 'https://stone-paper-scissors-haea.onrender.com'; // Update with your Render backend URL
+        this.backendUrl = '/api'; // PHP endpoints path
         this.jwtToken = null;
         
         this.initializeElements();
@@ -77,7 +77,7 @@ class RockPaperScissorsGame {
             this.resetGame();
         });
 
-        // Save score
+        // Save score to PHP backend (if logged in)
         this.saveScoreBtn.addEventListener('click', () => {
             this.saveScore();
         });
@@ -101,18 +101,24 @@ class RockPaperScissorsGame {
             }
         });
 
+        const signupOpenBtn = document.getElementById('signupOpenBtn');
+        if (signupOpenBtn) {
+            signupOpenBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showLoginModal();
+                // Focus will hint signup mode
+                const signupBtn = document.getElementById('signupSubmit');
+                if (signupBtn) signupBtn.focus();
+            });
+        }
+
         this.loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             this.login();
         });
 
-        const signupBtn = document.getElementById('signupSubmit');
-        if (signupBtn) {
-            signupBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.signup();
-            });
-        }
+        // No signup in local-only mode
 
         // Modal close events
         document.querySelectorAll('.close').forEach(closeBtn => {
@@ -294,15 +300,13 @@ class RockPaperScissorsGame {
     }
 
     async saveScore() {
-        console.log('Save score called. isLoggedIn:', this.isLoggedIn, 'playerName:', this.playerName);
         if (!this.isLoggedIn) {
             this.showLoginModal();
             this.showNotification('Please login to save your score!', 'info');
             return;
         }
-        
         try {
-            const scoreData = {
+            const payload = {
                 score: this.userScore,
                 totalGames: this.totalGames,
                 totalWins: this.totalWins,
@@ -311,27 +315,17 @@ class RockPaperScissorsGame {
                 maxStreak: this.maxStreak,
                 gameHistory: this.gameHistory
             };
-            
-            const response = await fetch(`${this.backendUrl}/api/scores`, {
+            const resp = await fetch(`${this.backendUrl}/score.php`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(this.jwtToken ? { 'Authorization': `Bearer ${this.jwtToken}` } : {})
-                },
-                body: JSON.stringify(scoreData)
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to save score');
-            }
-            
-            const data = await response.json();
+            if (!resp.ok) throw new Error('Failed to save score');
             this.showNotification('Score saved successfully!', 'success');
-            
-        } catch (error) {
-            console.error('Error saving score:', error);
-            this.showNotification('Failed to save score. Please try again.', 'error');
+        } catch (e) {
+            console.error(e);
+            this.showNotification('Failed to save score.', 'error');
         }
     }
 
@@ -347,38 +341,28 @@ class RockPaperScissorsGame {
         const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : '';
         const playerName = document.getElementById('playerName').value.trim();
         const password = this.passwordInput ? this.passwordInput.value : '';
-        if (!email || !playerName) {
-            this.showNotification('Email and player name are required', 'error');
-            return;
-        }
-
+        if (!email || !password) { this.showNotification('Enter email and password', 'error'); return; }
         try {
-            const resp = await fetch(`${this.backendUrl}/api/auth/login`, {
+            const resp = await fetch(`${this.backendUrl}/login.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email, playerName, password })
             });
-            if (!resp.ok) {
-                const err = await resp.json().catch(() => ({}));
-                throw new Error(err.message || 'Login failed');
-            }
             const data = await resp.json();
-            this.jwtToken = data.token;
-            this.playerName = data.player?.playerName || playerName;
+            if (!resp.ok || !data.success) throw new Error(data.message || 'Login failed');
+            this.playerName = data.player.player_name || playerName;
             this.usernameEl.textContent = this.playerName;
             this.isLoggedIn = true;
             this.updateAuthUI();
-
-            // Clear inputs
             if (this.loginEmailInput) this.loginEmailInput.value = '';
             document.getElementById('playerName').value = '';
             if (this.passwordInput) this.passwordInput.value = '';
-
             this.closeModal(this.loginModal);
             this.showNotification(`Welcome, ${this.playerName}!`, 'success');
             this.saveGameData();
         } catch (e) {
-            console.error('Login error:', e);
+            console.error(e);
             this.showNotification(e.message, 'error');
         }
     }
@@ -391,34 +375,27 @@ class RockPaperScissorsGame {
             this.showNotification('Enter email, name, and 6+ char password', 'error');
             return;
         }
-
         try {
-            const resp = await fetch(`${this.backendUrl}/api/auth/signup`, {
+            const resp = await fetch(`${this.backendUrl}/signup.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email, playerName, password })
             });
-            if (!resp.ok) {
-                const err = await resp.json().catch(() => ({}));
-                throw new Error(err.message || 'Signup failed');
-            }
             const data = await resp.json();
-            this.jwtToken = data.token;
-            this.playerName = data.player?.playerName || playerName;
+            if (!resp.ok || !data.success) throw new Error(data.message || 'Signup failed');
+            this.playerName = data.player.player_name || playerName;
             this.usernameEl.textContent = this.playerName;
             this.isLoggedIn = true;
             this.updateAuthUI();
-
-            // Clear inputs
             if (this.loginEmailInput) this.loginEmailInput.value = '';
             document.getElementById('playerName').value = '';
             if (this.passwordInput) this.passwordInput.value = '';
-
             this.closeModal(this.loginModal);
             this.showNotification(`Welcome, ${this.playerName}!`, 'success');
             this.saveGameData();
         } catch (e) {
-            console.error('Signup error:', e);
+            console.error(e);
             this.showNotification(e.message, 'error');
         }
     }

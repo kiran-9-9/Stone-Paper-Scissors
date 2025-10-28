@@ -1,3 +1,12 @@
+## Hostinger PHP + MySQL Setup
+
+1. Create MySQL database in Hostinger hPanel and note DB name, user, password, host.
+2. Upload `FRONTEND/` files to `public_html/`.
+3. Create an `api/` folder in `public_html/` and upload PHP endpoints (signup.php, login.php, score.php, leaderboard.php, player.php, stats.php, config.php).
+4. In `config.php`, set the Hostinger DB credentials. Import `database.sql` (phpMyAdmin → Import) to create tables.
+5. In `FRONTEND/sps.js`, ensure `this.backendUrl = '/api'`.
+6. Test: open your site → Signup → Login → Save Score.
+
 # 🪨📄✂️ Enhanced Rock Paper Scissors Game
 
 A modern, responsive Rock Paper Scissors game with backend integration, user tracking, leaderboards, and smooth animations. Built with vanilla JavaScript, Node.js, Express, and MongoDB. Deployed on Netlify (frontend) and Render (backend).

@@ -22,7 +22,10 @@
                     <i class="fas fa-user-circle"></i>
                     <span id="username">Player</span>
                 </div>
-                <button id="loginBtn" class="btn btn-secondary">Login</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button id="loginBtn" class="btn btn-secondary">Login</button>
+                    <button id="signupOpenBtn" class="btn btn-primary">Sign Up</button>
+                </div>
             </div>
         </header>
 
@@ -121,20 +124,9 @@
             </div>
         </div>
 
-        <!-- Leaderboard Modal -->
-        <div id="leaderboardModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2><i class="fas fa-trophy"></i> Leaderboard</h2>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div id="leaderboardList"></div>
-                </div>
-            </div>
-        </div>
+        
 
-        <!-- Login Modal -->
+        <!-- Login / Signup Modal (PHP backend) -->
         <div id="loginModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -147,7 +139,7 @@
                             <label for="loginEmail">Email:</label>
                             <input type="email" id="loginEmail" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="playerNameGroup">
                             <label for="playerName">Player Name:</label>
                             <input type="text" id="playerName" required>
                         </div>
@@ -155,9 +147,10 @@
                             <label for="password">Password:</label>
                             <input type="password" id="password" minlength="6">
                         </div>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                             <button type="submit" id="loginSubmit" class="btn btn-primary">Login</button>
                             <button type="button" id="signupSubmit" class="btn btn-secondary">Sign Up</button>
+                            <span id="authHint" style="color: rgba(255,255,255,0.85); font-size: 0.9rem;"></span>
                         </div>
                     </form>
                 </div>
@@ -165,6 +158,6 @@
         </div>
     </div>
 
-    <script src="sps.js?v=3"></script>
+    <script src="sps.js?v=4"></script>
 </body>
 </html>
