@@ -1,0 +1,61 @@
+name: Deploy to Hostinger via FTP
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: hostinger-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-frontend:
+    name: Upload FRONTEND → public_html
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy FRONTEND
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftps
+          security: strict
+          local-dir: FRONTEND
+          server-dir: /public_html/
+          exclude: |
+            **/.git**
+            **/.github**
+            **/node_modules**
+            **/*.md
+            database.sql
+
+  deploy-api:
+    name: Upload api → public_html/api
+    needs: deploy-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy API
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftps
+          security: strict
+          local-dir: api
+          server-dir: /public_html/api/
+          exclude: |
+            **/.git**
+            **/.github**
+            **/node_modules**
+
