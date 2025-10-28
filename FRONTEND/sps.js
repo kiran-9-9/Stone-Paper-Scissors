@@ -10,7 +10,7 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.isLoggedIn = false;
         this.gameHistory = [];
-        this.backendUrl = 'https://stone-paper-scissors-backend-unth.onrender.com'; // Update with your Render backend URL
+        this.backendUrl = 'https://stone-paper-scissors-u198.onrender.com'; // Update with your Render backend URL
         this.jwtToken = null;
         
         this.initializeElements();
@@ -49,6 +49,7 @@ class RockPaperScissorsGame {
         this.leaderboardModal = document.getElementById('leaderboardModal');
         this.loginForm = document.getElementById('loginForm');
         this.loginEmailInput = document.getElementById('loginEmail');
+        this.passwordInput = document.getElementById('password');
     }
 
     attachEventListeners() {
@@ -93,6 +94,14 @@ class RockPaperScissorsGame {
             e.preventDefault();
             this.login();
         });
+
+        const signupBtn = document.getElementById('signupSubmit');
+        if (signupBtn) {
+            signupBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.signup();
+            });
+        }
 
         // Modal close events
         document.querySelectorAll('.close').forEach(closeBtn => {
@@ -326,6 +335,7 @@ class RockPaperScissorsGame {
     async login() {
         const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : '';
         const playerName = document.getElementById('playerName').value.trim();
+        const password = this.passwordInput ? this.passwordInput.value : '';
         if (!email || !playerName) {
             this.showNotification('Email and player name are required', 'error');
             return;
@@ -335,7 +345,7 @@ class RockPaperScissorsGame {
             const resp = await fetch(`${this.backendUrl}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, playerName })
+                body: JSON.stringify({ email, playerName, password })
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({}));
@@ -351,12 +361,53 @@ class RockPaperScissorsGame {
             // Clear inputs
             if (this.loginEmailInput) this.loginEmailInput.value = '';
             document.getElementById('playerName').value = '';
+            if (this.passwordInput) this.passwordInput.value = '';
 
             this.closeModal(this.loginModal);
             this.showNotification(`Welcome, ${this.playerName}!`, 'success');
             this.saveGameData();
         } catch (e) {
             console.error('Login error:', e);
+            this.showNotification(e.message, 'error');
+        }
+    }
+
+    async signup() {
+        const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : '';
+        const playerName = document.getElementById('playerName').value.trim();
+        const password = this.passwordInput ? this.passwordInput.value : '';
+        if (!email || !playerName || !password || password.length < 6) {
+            this.showNotification('Enter email, name, and 6+ char password', 'error');
+            return;
+        }
+
+        try {
+            const resp = await fetch(`${this.backendUrl}/api/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, playerName, password })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.message || 'Signup failed');
+            }
+            const data = await resp.json();
+            this.jwtToken = data.token;
+            this.playerName = data.player?.playerName || playerName;
+            this.usernameEl.textContent = this.playerName;
+            this.isLoggedIn = true;
+            this.loginBtn.textContent = 'Logout';
+
+            // Clear inputs
+            if (this.loginEmailInput) this.loginEmailInput.value = '';
+            document.getElementById('playerName').value = '';
+            if (this.passwordInput) this.passwordInput.value = '';
+
+            this.closeModal(this.loginModal);
+            this.showNotification(`Welcome, ${this.playerName}!`, 'success');
+            this.saveGameData();
+        } catch (e) {
+            console.error('Signup error:', e);
             this.showNotification(e.message, 'error');
         }
     }

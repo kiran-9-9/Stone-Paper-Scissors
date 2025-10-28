@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -68,6 +69,7 @@ const connectDB = async () => {
 const PlayerSchema = new mongoose.Schema({
     playerName: { type: String, required: true, trim: true, maxlength: 50 },
     email: { type: String, trim: true, lowercase: true },
+    passwordHash: { type: String },
     totalGames: { type: Number, default: 0 },
     totalWins: { type: Number, default: 0 },
     currentStreak: { type: Number, default: 0 },
@@ -160,7 +162,8 @@ app.get('/health', (req, res) => {
 // Auth: login or register
 app.post('/api/auth/login', [
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
-    body('playerName').trim().isLength({ min: 2, max: 50 }).withMessage('Player name must be 2-50 chars')
+    body('playerName').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Player name must be 2-50 chars'),
+    body('password').optional().isString().isLength({ min: 6 }).withMessage('Password must be at least 6 chars')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -168,16 +171,25 @@ app.post('/api/auth/login', [
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { email, playerName } = req.body;
+        const { email, playerName, password } = req.body;
 
         let player = await Player.findOne({ email });
         if (!player) {
-            player = new Player({ email, playerName });
-            await player.save();
-        } else if (player.playerName !== playerName) {
-            player.playerName = playerName;
-            player.updatedAt = new Date();
-            await player.save();
+            return res.status(404).json({ success: false, message: 'Account not found. Please sign up.' });
+        }
+
+        // If account has a password, verify it
+        if (player.passwordHash) {
+            if (!password) return res.status(400).json({ success: false, message: 'Password required' });
+            const ok = await bcrypt.compare(password, player.passwordHash);
+            if (!ok) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        } else {
+            // No password set yet; allow name update
+            if (playerName && player.playerName !== playerName) {
+                player.playerName = playerName;
+                player.updatedAt = new Date();
+                await player.save();
+            }
         }
 
         const token = jwt.sign({ playerId: player._id.toString(), email: player.email, playerName: player.playerName }, JWT_SECRET, { expiresIn: '7d' });
@@ -196,6 +208,49 @@ app.post('/api/auth/login', [
         });
     } catch (error) {
         console.error('Auth error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Auth: signup
+app.post('/api/auth/signup', [
+    body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
+    body('playerName').trim().isLength({ min: 2, max: 50 }).withMessage('Player name must be 2-50 chars'),
+    body('password').isString().isLength({ min: 6 }).withMessage('Password must be at least 6 chars')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { email, playerName, password } = req.body;
+
+        let existing = await Player.findOne({ email });
+        if (existing && existing.passwordHash) {
+            return res.status(409).json({ success: false, message: 'Email already registered' });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        let player;
+        if (existing) {
+            // Upgrade existing email-only record with password and name
+            existing.playerName = playerName;
+            existing.passwordHash = passwordHash;
+            existing.updatedAt = new Date();
+            await existing.save();
+            player = existing;
+        } else {
+            player = new Player({ email, playerName, passwordHash });
+            await player.save();
+        }
+
+        const token = jwt.sign({ playerId: player._id.toString(), email: player.email, playerName: player.playerName }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).json({ success: true, token, player: { id: player._id, email: player.email, playerName: player.playerName } });
+    } catch (error) {
+        console.error('Signup error:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });

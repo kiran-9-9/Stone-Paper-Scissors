@@ -151,7 +151,14 @@
                             <label for="playerName">Player Name:</label>
                             <input type="text" id="playerName" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Login</button>
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" id="password" minlength="6">
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="submit" id="loginSubmit" class="btn btn-primary">Login</button>
+                            <button type="button" id="signupSubmit" class="btn btn-secondary">Sign Up</button>
+                        </div>
                     </form>
                 </div>
             </div>
