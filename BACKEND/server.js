@@ -159,6 +159,17 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// DB health
+app.get('/health/db', (req, res) => {
+    const conn = mongoose.connection;
+    res.json({
+        status: 'OK',
+        readyState: conn.readyState, // 1 means connected
+        host: conn.host,
+        name: conn.name
+    });
+});
+
 // Auth: login or register
 app.post('/api/auth/login', [
     body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),

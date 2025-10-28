@@ -420,15 +420,16 @@ class RockPaperScissorsGame {
         this.playerName = 'Player';
         this.usernameEl.textContent = 'Player';
         this.jwtToken = null;
+        this.loginBtn.textContent = 'Login';
+        console.log('Button text updated to: Login');
         
-        // Use setTimeout to update button AFTER state is changed to prevent event bubbling
-        setTimeout(() => {
-            this.loginBtn.textContent = 'Login';
-            console.log('Button text updated to: Login');
-        }, 0);
+        // Ensure any open modals are closed
+        if (this.loginModal) this.closeModal(this.loginModal);
+        
+        // Persist logout immediately
+        this.saveGameData();
         
         this.showNotification('Logged out successfully!', 'info');
-        this.saveGameData(); // Save logout state
         
         console.log('User logged out. New state - isLoggedIn:', this.isLoggedIn);
     }
