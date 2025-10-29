@@ -117,8 +117,15 @@ class RockPaperScissorsGame {
             e.preventDefault();
             this.login();
         });
-
-        // No signup in local-only mode
+        
+        // Signup button
+        const signupBtn = document.getElementById('signupSubmit');
+        if (signupBtn) {
+            signupBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.signup();
+            });
+        }
 
         // Modal close events
         document.querySelectorAll('.close').forEach(closeBtn => {
@@ -256,7 +263,8 @@ class RockPaperScissorsGame {
 
     updateStats() {
         this.totalWinsEl.textContent = this.totalWins;
-        this.winRateEl.textContent = this.totalGames > 0 ? Math.round((this.totalWins / this.totalGames) * 100) : 0;
+        const rate = this.totalGames > 0 ? Math.round((this.totalWins / this.totalGames) * 100) : 0;
+        this.winRateEl.textContent = `${rate}%`;
         this.streakEl.textContent = this.currentStreak;
     }
 
@@ -400,7 +408,7 @@ class RockPaperScissorsGame {
         }
     }
 
-    logout() {
+    async logout() {
         console.log('Logout called. Current state - isLoggedIn:', this.isLoggedIn);
         
         // Immediately set the state to prevent any further actions
@@ -414,6 +422,12 @@ class RockPaperScissorsGame {
         // Ensure any open modals are closed
         if (this.loginModal) this.closeModal(this.loginModal);
         
+        // Call backend to destroy session
+        try {
+            await fetch(`${this.backendUrl}/logout.php`, { method: 'POST', credentials: 'include' });
+        } catch (e) {
+            console.warn('Logout request failed:', e);
+        }
         // Persist logout immediately
         this.saveGameData();
         
@@ -427,7 +441,7 @@ class RockPaperScissorsGame {
         leaderboardList.innerHTML = '<p style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 20px;">Loading leaderboard...</p>';
         
         try {
-            const response = await fetch(`${this.backendUrl}/api/leaderboard`);
+            const response = await fetch(`${this.backendUrl}/leaderboard.php`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -464,10 +478,10 @@ class RockPaperScissorsGame {
                 item.className = 'leaderboard-item';
                 item.innerHTML = `
                     <span class="rank">#${index + 1}</span>
-                    <span class="name">${player.playerName || 'Unknown'}</span>
-                    <span class="score">${player.bestScore || 0}</span>
-                    <span class="wins">${player.totalWins || 0}W</span>
-                    <span class="games">${player.totalGames || 0}G</span>
+                    <span class="name">${player.player_name || 'Unknown'}</span>
+                    <span class="score">${player.best_score || 0}</span>
+                    <span class="wins">${player.total_wins || 0}W</span>
+                    <span class="games">${player.total_games || 0}G</span>
                 `;
                 leaderboardList.appendChild(item);
             });

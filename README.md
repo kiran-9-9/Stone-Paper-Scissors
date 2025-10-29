@@ -9,7 +9,7 @@
 
 # 🪨📄✂️ Enhanced Rock Paper Scissors Game
 
-A modern, responsive Rock Paper Scissors game with backend integration, user tracking, leaderboards, and smooth animations. Built with vanilla JavaScript, Node.js, Express, and MongoDB. Deployed on Netlify (frontend) and Render (backend).
+A modern, responsive Rock Paper Scissors game with backend integration, user tracking, leaderboards, and smooth animations. Frontend is vanilla JavaScript. Backend is PHP with MySQL.
 
 ## ✨ Features
 
@@ -23,93 +23,30 @@ A modern, responsive Rock Paper Scissors game with backend integration, user tra
 - 💾 **Local Storage** - Game progress saved locally
 - 🎯 **Touch Support** - Optimized for mobile devices
 
-### Backend Features
+### Backend Features (PHP/MySQL)
 - 👤 **User Tracking** - Player statistics and game history
 - 🏆 **Leaderboard System** - Global rankings and player stats
 - 📈 **Analytics** - Game statistics and player insights
-- 🔒 **Rate Limiting** - API protection
-- 📊 **MongoDB Integration** - Persistent data storage
-- 🛡️ **Security** - CORS, Helmet, and input validation
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local)
 
-### Prerequisites
-- Node.js 18+ (for backend)
-- MongoDB Atlas account (for database)
-- Netlify account (for frontend deployment)
-- Render account (for backend deployment)
+1. Start a local PHP server in the project root or `public_html` equivalent, serving `FRONTEND/` as web root and exposing `api/` under `/api`.
+   - Example (PHP built-in):
+     - Serve frontend: `php -S localhost:8000 -t FRONTEND`
+     - Ensure the `api/` folder is accessible at `http://localhost:8000/../api` or serve both via your local web server (XAMPP/WAMP).
+2. Create a MySQL database and import `database.sql`.
+3. Update `api/config.php` with your DB credentials (or set `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` env vars).
+4. Ensure `FRONTEND/sps.js` has `this.backendUrl = '/api'`.
+5. Open `FRONTEND/index.html` in a browser, then Signup → Login → Save Score.
 
-### Local Development
+## 🌐 Deployment Guide (Hostinger)
 
-**Note:** This project is configured for production deployment. For local development, you'll need to set up environment variables.
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd SPS
-   ```
-
-2. **Frontend Setup**
-   ```bash
-   cd FRONTEND
-   # Open index.html in your browser or use a local server
-   python -m http.server 8000
-   # Or use any static file server
-   ```
-
-3. **Backend Setup**
-   ```bash
-   cd BACKEND
-   npm install
-   cp env.example .env
-   # Edit .env with your MongoDB URI
-   npm start
-   ```
-
-## 🌐 Deployment Guide
-
-### Frontend Deployment (Netlify)
-
-1. **Prepare for Deployment**
-   - Update the backend URL in `FRONTEND/sps.js`:
-   ```javascript
-   this.backendUrl = 'https://your-backend-url.onrender.com';
-   ```
-
-2. **Deploy to Netlify**
-   - Connect your GitHub repository to Netlify
-   - Set build settings:
-     - Build command: `echo 'No build process needed'`
-     - Publish directory: `FRONTEND`
-   - Deploy!
-
-3. **Configure Environment Variables**
-   - In Netlify dashboard, go to Site settings > Environment variables
-   - Add any required environment variables
-
-### Backend Deployment (Render)
-
-1. **Prepare for Deployment**
-   - Create a MongoDB Atlas cluster
-   - Update `BACKEND/render.yaml` with your settings
-   - Update the frontend URL in your backend code
-
-2. **Deploy to Render**
-   - Connect your GitHub repository to Render
-   - Create a new Web Service
-   - Configure:
-     - Build Command: `npm install`
-     - Start Command: `npm start`
-     - Environment: Node
-   - Add environment variables:
-     - `MONGODB_URI`: Your MongoDB connection string
-     - `FRONTEND_URL`: Your Netlify frontend URL
-     - `NODE_ENV`: production
-
-3. **Database Setup**
-   - Create a MongoDB Atlas cluster
-   - Get the connection string
-   - Add it to your Render environment variables
+1. Create a MySQL database in hPanel and note credentials.
+2. Upload `FRONTEND/` contents to `public_html/`.
+3. Create `public_html/api/` and upload: `config.php`, `login.php`, `signup.php`, `logout.php`, `score.php`, `leaderboard.php`, `player.php`, `stats.php`.
+4. Edit `api/config.php` with DB credentials or set env vars in hosting.
+5. Import `database.sql` via phpMyAdmin.
+6. Ensure `FRONTEND/sps.js` uses `this.backendUrl = '/api'`.
 
 ## 🔧 Configuration
 
@@ -155,32 +92,35 @@ The game is fully optimized for mobile devices with:
   - `S` for Scissors
   - `Spacebar` for Reset
 
-## 🏗️ Architecture
+## 🏗️ Structure
 
 ```
 SPS/
 ├── FRONTEND/                 # Frontend application
 │   ├── index.html           # Main HTML file
-│   ├── sps.css             # Enhanced CSS with animations
-│   ├── sps.js              # Game logic and API integration
-│   ├── netlify.toml        # Netlify configuration
-│   └── *.png               # Game assets
-├── BACKEND/                 # Backend API
-│   ├── server.js           # Express server
-│   ├── package.json        # Dependencies
-│   ├── render.yaml         # Render configuration
-│   └── env.example         # Environment variables template
-└── README.md               # This file
+│   ├── sps.css             # Styles
+│   └── sps.js              # Game logic and API integration
+├── api/                      # PHP API (served under /api)
+│   ├── config.php
+│   ├── login.php
+│   ├── signup.php
+│   ├── logout.php
+│   ├── score.php
+│   ├── leaderboard.php
+│   ├── player.php
+│   └── stats.php
+└── database.sql              # MySQL schema
 ```
 
 ## 🔌 API Endpoints
 
-- `GET /` - API information
-- `GET /health` - Health check
-- `POST /api/scores` - Save player score
-- `GET /api/leaderboard` - Get leaderboard
-- `GET /api/player/:id` - Get player stats
-- `GET /api/stats` - Get global statistics
+- `POST /api/signup.php` - Signup
+- `POST /api/login.php` - Login
+- `POST /api/logout.php` - Logout
+- `POST /api/score.php` - Save player score
+- `GET /api/leaderboard.php?limit=10` - Get leaderboard
+- `GET /api/player.php?id=123` or `?name=Alice` - Get player
+- `GET /api/stats.php` - Get global statistics
 
 ## 🎨 Customization
 
@@ -206,8 +146,8 @@ Modify `FRONTEND/sps.js` to:
    - Check CORS configuration in backend
 
 2. **Database Connection**
-   - Verify MongoDB URI
-   - Check network access in MongoDB Atlas
+   - Verify `config.php` DB credentials
+   - Ensure tables exist via `database.sql`
 
 3. **Deployment Issues**
    - Check environment variables
@@ -220,13 +160,10 @@ Modify `FRONTEND/sps.js` to:
 - **Backend**: Rate limiting, compression, caching
 - **Database**: Indexed queries, connection pooling
 
-## 🔒 Security Features
+## 🔒 Notes
 
-- Rate limiting on API endpoints
-- Input validation and sanitization
-- CORS protection
-- Helmet.js security headers
-- MongoDB injection prevention
+- Use HTTPS so session cookies can be `secure`.
+- PHP `session_set_cookie_params` is configured with `HttpOnly` and `SameSite=Lax`.
 
 ## 📊 Analytics
 
